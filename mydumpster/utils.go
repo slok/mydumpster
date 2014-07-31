@@ -10,8 +10,10 @@ import (
 const (
 	SHOW_TABLE_CREATION_FMT = "SHOW CREATE TABLE %s"
 	DROP_TABLE_FMT          = "DROP TABLE IF EXISTS `%s`;"
-	LOCK_TABLE_FMT          = "LOCK TABLES %s"
+	LOCK_TABLE_FMT          = "LOCK TABLES %s;"
 	LOCK_READ_FMT           = "`%s` READ"
+	LOCK_WRITE_FMT          = "`%s` WRITE"
+	UNLOCK_TABLES_FMT       = "UNLOCK TABLES;"
 )
 
 // Returns the table creanion syntax string
@@ -27,19 +29,42 @@ func GetTableDrop(tableName string) string {
 	return fmt.Sprintf(DROP_TABLE_FMT, tableName)
 }
 
-// Locks the tables for the current session
-func LockTables(db *sql.DB, tableNames ...string) error {
+func GetLockTables(mode string, tableNames ...string) string {
+
+	// default READ
+	if mode == "write" {
+		mode = LOCK_WRITE_FMT
+	} else {
+		mode = LOCK_READ_FMT
+	}
 
 	aux := make([]string, 0)
 	// Create the table locks
 	for _, tn := range tableNames {
-		aux = append(aux, fmt.Sprintf(LOCK_READ_FMT, tn))
+		aux = append(aux, fmt.Sprintf(mode, tn))
 	}
 
-	query := fmt.Sprintf(LOCK_TABLE_FMT, strings.Join(aux, ", "))
+	return fmt.Sprintf(LOCK_TABLE_FMT, strings.Join(aux, ", "))
+}
 
-	// apply
-	_, err := db.Exec(query)
+func GetUnlockTables() string {
+	return UNLOCK_TABLES_FMT
+}
+
+// Locks the tables in read for the current session
+func LockTablesRead(db *sql.DB, tableNames ...string) error {
+	_, err := db.Exec(GetLockTables("read", tableNames...))
+	return err
+}
+
+// Locks the tables in write for the current session
+func LockTablesWrite(db *sql.DB, tableNames ...string) error {
+	_, err := db.Exec(GetLockTables("write", tableNames...))
+	return err
+}
+
+func UnlockTables(db *sql.DB) error {
+	_, err := db.Exec(GetUnlockTables())
 	return err
 }
 
