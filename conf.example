@@ -1,0 +1,26 @@
+{
+    "tables":{
+        "pais": {
+            "filters": [
+                "id < 10"
+            ],
+
+            "censorchip": {
+                "a2": {
+                    "prefix": "****_",
+                    "suffix": "_****",
+                    "blank": false, // Set to blank
+                    "null": false, // Set to null (null has more priority than blank)
+                }
+            },
+
+            "triggers": {
+                "divisa": {
+                    "name": "divisa",
+                    "link": "divisa_id",
+                    "all": false, // Dump all the data not only the parent(pais) related data
+                },
+            }
+        }
+    }
+}
