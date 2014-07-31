@@ -30,6 +30,9 @@ func main() {
 	pais_creation, err := mydumpster.GetTableCreation(db, "pais")
 	mydumpster.CheckKill(err)
 
+	mydumpster.CheckKill(mydumpster.LockTables(db, "pais"))
+
+	// Write to file
 	f, err := os.Create("dump.sql")
 	mydumpster.CheckKill(err)
 	defer f.Close()
@@ -37,5 +40,6 @@ func main() {
 	f.WriteString(pais_drop)
 	f.WriteString("\n")
 	f.WriteString(pais_creation)
+	f.Sync()
 
 }
