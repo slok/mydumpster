@@ -30,9 +30,14 @@ func main() {
 	pais_creation, err := mydumpster.GetTableCreation(db, "pais")
 	mydumpster.CheckKill(err)
 
-	mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
-	mydumpster.CheckKill(mydumpster.LockTablesWrite(db, "pais"))
-	mydumpster.CheckKill(mydumpster.UnlockTables(db))
+	columns, err := mydumpster.GetColums(db, "pais")
+	fmt.Println(columns)
+	mydumpster.CheckKill(err)
+
+	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
+	//mydumpster.CheckKill(mydumpster.LockTablesWrite(db, "pais"))
+	//mydumpster.CheckKill(mydumpster.UnlockTables(db))
+
 	// Write to file
 	f, err := os.Create("dump.sql")
 	mydumpster.CheckKill(err)

@@ -14,6 +14,7 @@ const (
 	LOCK_READ_FMT           = "`%s` READ"
 	LOCK_WRITE_FMT          = "`%s` WRITE"
 	UNLOCK_TABLES_FMT       = "UNLOCK TABLES;"
+	GET_ONE_ROW_FMT         = "SELECT * FROM %s LIMIT 1;"
 )
 
 // Returns the table creanion syntax string
@@ -66,6 +67,27 @@ func LockTablesWrite(db *sql.DB, tableNames ...string) error {
 func UnlockTables(db *sql.DB) error {
 	_, err := db.Exec(GetUnlockTables())
 	return err
+}
+
+func GetColums(db *sql.DB, tableName string) ([]string, error) {
+
+	rows, err := db.Query(fmt.Sprintf(GET_ONE_ROW_FMT, tableName))
+	if err != nil {
+		return nil, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	// Store the colume names in the list
+	vals := make([]string, len(cols))
+	for i, col := range cols {
+		vals[i] = col
+	}
+
+	return vals, err
 }
 
 // Checks and error and the program dies (panic)
