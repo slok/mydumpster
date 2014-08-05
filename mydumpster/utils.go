@@ -15,6 +15,9 @@ const (
 	LOCK_WRITE_FMT          = "`%s` WRITE"
 	UNLOCK_TABLES_FMT       = "UNLOCK TABLES;"
 	GET_ONE_ROW_FMT         = "SELECT * FROM %s LIMIT 1;"
+	GET_ROWS_FMT            = "SELECT %s from `%s` %s;"
+	WHERE_FMT               = "WHERE %s"
+	INSERT_FMT              = "INSERT INTO `%s` (%s) VALUES %s"
 )
 
 // Returns the table creanion syntax string
@@ -67,6 +70,69 @@ func LockTablesWrite(db *sql.DB, tableNames ...string) error {
 func UnlockTables(db *sql.DB) error {
 	_, err := db.Exec(GetUnlockTables())
 	return err
+}
+
+// FIXME: Change in the future to be lazy
+func GetRows(db *sql.DB, tableName string, columns []string, filters []string) ([][]string, error) {
+
+	// Create the select string
+	columnStr := strings.Join(columns, ", ")
+
+	wheres := ""
+	if filters != nil {
+		wheres = fmt.Sprintf("WHERE %s", strings.Join(filters, " AND "))
+	}
+
+	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, tableName, wheres)
+	fmt.Println(selectStr)
+	rows, err := db.Query(selectStr)
+	defer rows.Close()
+
+	// Create the structure for all teh rows
+	finalValues := make([][]string, 0)
+
+	// For each row...
+	for rows.Next() {
+
+		// Create the slice to save the rawbytes
+		scanArgs := make([]interface{}, len(columns))
+		scanArgsCopy := make([]string, len(columns))
+
+		// Initialize our "abstract" list
+		for i := range columns { // use columns as a lenth loop only
+			scanArgs[i] = new(sql.RawBytes)
+		}
+
+		err = rows.Scan(scanArgs...)
+
+		// FIXME: Scape characters
+		for i, v := range scanArgs {
+
+			if v != nil {
+				scanArgsCopy[i] = fmt.Sprintf("'%s'", *(v.(*sql.RawBytes)))
+				//fmt.Println(strRowValues)
+			} else {
+				scanArgsCopy[i] = "NULL"
+			}
+
+		}
+
+		finalValues = append(finalValues, scanArgsCopy)
+	}
+
+	return finalValues, err
+}
+
+func GetInsertStrFromRows(rowValues [][]string, tableName string, columns []string) string {
+
+	columnStr := strings.Join(columns, ", ")
+	strRows := make([]string, 0)
+
+	for _, values := range rowValues {
+		strRows = append(strRows, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
+	}
+
+	return fmt.Sprintf(INSERT_FMT, tableName, columnStr, strings.Join(strRows, ", "))
 }
 
 func GetColums(db *sql.DB, tableName string) ([]string, error) {

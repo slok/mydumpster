@@ -26,12 +26,16 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	pais_drop := mydumpster.GetTableDrop("pais")
-	pais_creation, err := mydumpster.GetTableCreation(db, "pais")
+	table := "historico"
+	//filters := []string{"id >= 1", "id < 30"}
+
+	paisDrop := mydumpster.GetTableDrop(table)
+	paisCreation, err := mydumpster.GetTableCreation(db, table)
 	mydumpster.CheckKill(err)
 
-	columns, err := mydumpster.GetColums(db, "pais")
-	fmt.Println(columns)
+	columns, err := mydumpster.GetColums(db, table)
+	rows, err := mydumpster.GetRows(db, table, columns, nil)
+	insertStr := mydumpster.GetInsertStrFromRows(rows, table, columns)
 	mydumpster.CheckKill(err)
 
 	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
@@ -43,9 +47,11 @@ func main() {
 	mydumpster.CheckKill(err)
 	defer f.Close()
 
-	f.WriteString(pais_drop)
+	f.WriteString(paisDrop)
 	f.WriteString("\n")
-	f.WriteString(pais_creation)
+	f.WriteString(paisCreation)
+	f.WriteString("\n")
+	f.WriteString(insertStr)
 	f.Sync()
 
 }
