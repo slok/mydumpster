@@ -73,7 +73,7 @@ func UnlockTables(db *sql.DB) error {
 }
 
 // FIXME: Change in the future to be lazy
-func GetRows(db *sql.DB, tableName string, columns []string, filters []string) ([][]string, error) {
+func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (chan []string, error) {
 
 	// Create the select string
 	columnStr := strings.Join(columns, ", ")
@@ -84,43 +84,46 @@ func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (
 	}
 
 	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, tableName, wheres)
-	fmt.Println(selectStr)
+	// Create the channel
+	channel := make(chan []string)
+
 	rows, err := db.Query(selectStr)
-	defer rows.Close()
+	// This will make the thing lazy
+	go func() {
+		defer rows.Close()
+		// For each row...
+		i := 0
+		for rows.Next() {
+			i = i + 1
 
-	// Create the structure for all teh rows
-	finalValues := make([][]string, 0)
+			// Create the slice to save the rawbytes
+			scanArgs := make([]interface{}, len(columns))
+			scanArgsCopy := make([]string, len(columns))
 
-	// For each row...
-	for rows.Next() {
-
-		// Create the slice to save the rawbytes
-		scanArgs := make([]interface{}, len(columns))
-		scanArgsCopy := make([]string, len(columns))
-
-		// Initialize our "abstract" list
-		for i := range columns { // use columns as a lenth loop only
-			scanArgs[i] = new(sql.RawBytes)
-		}
-
-		err = rows.Scan(scanArgs...)
-
-		// FIXME: Scape characters
-		for i, v := range scanArgs {
-
-			if v != nil {
-				scanArgsCopy[i] = fmt.Sprintf("'%s'", *(v.(*sql.RawBytes)))
-				//fmt.Println(strRowValues)
-			} else {
-				scanArgsCopy[i] = "NULL"
+			// Initialize our "abstract" list
+			for i := range columns { // use columns as a lenth loop only
+				scanArgs[i] = new(sql.RawBytes)
 			}
 
+			//FIXME: for now channels don't send errors
+			err = rows.Scan(scanArgs...)
+
+			// FIXME: Scape characters
+			for i, v := range scanArgs {
+				if v != nil {
+					scanArgsCopy[i] = fmt.Sprintf("'%s'", *(v.(*sql.RawBytes)))
+					//fmt.Println(strRowValues)
+				} else {
+					scanArgsCopy[i] = "NULL"
+				}
+			}
+			// Send lazily
+			channel <- scanArgsCopy
 		}
-
-		finalValues = append(finalValues, scanArgsCopy)
-	}
-
-	return finalValues, err
+		// We are done here
+		close(channel)
+	}()
+	return channel, err
 }
 
 func GetInsertStrFromRows(rowValues [][]string, tableName string, columns []string) string {

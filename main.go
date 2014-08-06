@@ -26,15 +26,20 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	table := "historico"
-	//filters := []string{"id >= 1", "id < 30"}
+	table := "modulo_pago_gateway_set"
+	filters := []string{"id >= 1", "id < 20"}
 
 	paisDrop := mydumpster.GetTableDrop(table)
 	paisCreation, err := mydumpster.GetTableCreation(db, table)
 	mydumpster.CheckKill(err)
 
 	columns, err := mydumpster.GetColums(db, table)
-	rows, err := mydumpster.GetRows(db, table, columns, nil)
+	channel, err := mydumpster.GetRows(db, table, columns, filters)
+	rows := make([][]string, 0)
+	for i := range channel {
+		rows = append(rows, i)
+	}
+
 	insertStr := mydumpster.GetInsertStrFromRows(rows, table, columns)
 	mydumpster.CheckKill(err)
 
