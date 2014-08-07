@@ -4,14 +4,27 @@ import (
 	"strings"
 )
 
-var scapeChars = map[string]string{
-	string([]byte{0}): `\0`, // This is null string a.k.a (\0, ^@...)
+var replacementChars = map[string]string{
+	// Null char(\0, ^@...)
+	string([]byte{0x00}): `\0`,
+
+	// New line, LF (\n)
+	string([]byte{0x0A}): `\n`,
+
+	// Carriage return, CR (\r)
+	string([]byte{0x0D}): `\r`,
+
+	// Scape, ESC, ^[, (\)
+	string([]byte{0x1A}): `\`,
+
+	// Apostrophe, ', (\')
+	string([]byte{0x27}): `\'`,
 }
 
 // Check all the replacements needed
-func ScapeCharacters(str string) string {
+func ReplaceCharacters(str string) string {
 
-	for k, v := range scapeChars {
+	for k, v := range replacementChars {
 		str = strings.Replace(str, k, v, -1)
 	}
 	return str

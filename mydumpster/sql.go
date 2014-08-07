@@ -65,12 +65,13 @@ func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (
 			//FIXME: for now channels don't send errors
 			err = rows.Scan(scanArgs...)
 
-			// FIXME: Scape characters
 			for i, v := range scanArgs {
 				if v != nil {
-					scanArgsCopy[i] = ScapeCharacters(
-						fmt.Sprintf("'%s'", *(v.(*sql.RawBytes))))
-					//fmt.Println(strRowValues)
+					// Scape before surrounding by ''(apostrophes)
+					scapedString := ReplaceCharacters(
+						fmt.Sprintf("%s", *(v.(*sql.RawBytes))))
+					scanArgsCopy[i] = fmt.Sprintf("'%s'", scapedString)
+
 				} else {
 					scanArgsCopy[i] = "NULL"
 				}
