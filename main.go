@@ -27,10 +27,10 @@ func main() {
 	mydumpster.CheckKill(db.Ping())
 
 	table := "modulo_pago_gateway_set"
-	filters := []string{"id >= 1", "id < 20"}
+	filters := []string{"id = 11"}
 
-	paisDrop := mydumpster.GetTableDrop(table)
-	paisCreation, err := mydumpster.GetTableCreation(db, table)
+	paisDrop := mydumpster.TableDropStr(table)
+	paisCreation, err := mydumpster.TableCreationStr(db, table)
 	mydumpster.CheckKill(err)
 
 	columns, err := mydumpster.GetColums(db, table)
@@ -40,7 +40,7 @@ func main() {
 		rows = append(rows, i)
 	}
 
-	insertStr := mydumpster.GetInsertStrFromRows(rows, table, columns)
+	insertStr := mydumpster.InsertRowsStr(rows, table, columns)
 	mydumpster.CheckKill(err)
 
 	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))

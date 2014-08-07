@@ -1,166 +1,26 @@
 package mydumpster
 
 import (
-	"database/sql"
-	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"strings"
 )
 
-const (
-	SHOW_TABLE_CREATION_FMT = "SHOW CREATE TABLE %s"
-	DROP_TABLE_FMT          = "DROP TABLE IF EXISTS `%s`;"
-	LOCK_TABLE_FMT          = "LOCK TABLES %s;"
-	LOCK_READ_FMT           = "`%s` READ"
-	LOCK_WRITE_FMT          = "`%s` WRITE"
-	UNLOCK_TABLES_FMT       = "UNLOCK TABLES;"
-	GET_ONE_ROW_FMT         = "SELECT * FROM %s LIMIT 1;"
-	GET_ROWS_FMT            = "SELECT %s from `%s` %s;"
-	WHERE_FMT               = "WHERE %s"
-	INSERT_FMT              = "INSERT INTO `%s` (%s) VALUES %s"
-)
-
-// Returns the table creanion syntax string
-func GetTableCreation(db *sql.DB, tableName string) (string, error) {
-	var garbage, result string
-	err := db.QueryRow(fmt.Sprintf(
-		SHOW_TABLE_CREATION_FMT, tableName)).Scan(&garbage, &result)
-	return result, err
+var scapeChars = map[string]string{
+	string([]byte{0}): `\0`, // This is null string a.k.a (\0, ^@...)
 }
 
-// Returns the table creanion syntax string
-func GetTableDrop(tableName string) string {
-	return fmt.Sprintf(DROP_TABLE_FMT, tableName)
-}
+// Check all the replacements needed
+func ScapeCharacters(str string) string {
 
-func GetLockTables(mode string, tableNames ...string) string {
-
-	// default READ
-	if mode == "write" {
-		mode = LOCK_WRITE_FMT
-	} else {
-		mode = LOCK_READ_FMT
+	for k, v := range scapeChars {
+		str = strings.Replace(str, k, v, -1)
 	}
+	return str
 
-	aux := make([]string, 0)
-	// Create the table locks
-	for _, tn := range tableNames {
-		aux = append(aux, fmt.Sprintf(mode, tn))
-	}
-
-	return fmt.Sprintf(LOCK_TABLE_FMT, strings.Join(aux, ", "))
-}
-
-func GetUnlockTables() string {
-	return UNLOCK_TABLES_FMT
-}
-
-// Locks the tables in read for the current session
-func LockTablesRead(db *sql.DB, tableNames ...string) error {
-	_, err := db.Exec(GetLockTables("read", tableNames...))
-	return err
-}
-
-// Locks the tables in write for the current session
-func LockTablesWrite(db *sql.DB, tableNames ...string) error {
-	_, err := db.Exec(GetLockTables("write", tableNames...))
-	return err
-}
-
-func UnlockTables(db *sql.DB) error {
-	_, err := db.Exec(GetUnlockTables())
-	return err
-}
-
-// FIXME: Change in the future to be lazy
-func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (chan []string, error) {
-
-	// Create the select string
-	columnStr := strings.Join(columns, ", ")
-
-	wheres := ""
-	if filters != nil {
-		wheres = fmt.Sprintf("WHERE %s", strings.Join(filters, " AND "))
-	}
-
-	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, tableName, wheres)
-	// Create the channel
-	channel := make(chan []string)
-
-	rows, err := db.Query(selectStr)
-	// This will make the thing lazy
-	go func() {
-		defer rows.Close()
-		// For each row...
-		i := 0
-		for rows.Next() {
-			i = i + 1
-
-			// Create the slice to save the rawbytes
-			scanArgs := make([]interface{}, len(columns))
-			scanArgsCopy := make([]string, len(columns))
-
-			// Initialize our "abstract" list
-			for i := range columns { // use columns as a lenth loop only
-				scanArgs[i] = new(sql.RawBytes)
-			}
-
-			//FIXME: for now channels don't send errors
-			err = rows.Scan(scanArgs...)
-
-			// FIXME: Scape characters
-			for i, v := range scanArgs {
-				if v != nil {
-					scanArgsCopy[i] = fmt.Sprintf("'%s'", *(v.(*sql.RawBytes)))
-					//fmt.Println(strRowValues)
-				} else {
-					scanArgsCopy[i] = "NULL"
-				}
-			}
-			// Send lazily
-			channel <- scanArgsCopy
-		}
-		// We are done here
-		close(channel)
-	}()
-	return channel, err
-}
-
-func GetInsertStrFromRows(rowValues [][]string, tableName string, columns []string) string {
-
-	columnStr := strings.Join(columns, ", ")
-	strRows := make([]string, 0)
-
-	for _, values := range rowValues {
-		strRows = append(strRows, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
-	}
-
-	return fmt.Sprintf(INSERT_FMT, tableName, columnStr, strings.Join(strRows, ", "))
-}
-
-func GetColums(db *sql.DB, tableName string) ([]string, error) {
-
-	rows, err := db.Query(fmt.Sprintf(GET_ONE_ROW_FMT, tableName))
-	if err != nil {
-		return nil, err
-	}
-
-	cols, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	// Store the colume names in the list
-	vals := make([]string, len(cols))
-	for i, col := range cols {
-		vals[i] = col
-	}
-
-	return vals, err
 }
 
 // Checks and error and the program dies (panic)
 func CheckKill(e error) {
+
 	if e != nil {
 		panic(e)
 	}
