@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	WHERE_FMT = "WHERE %s"
-	AND_FMT   = " AND "
-	NULL      = "NULL"
+	NULL = "NULL"
 )
 
 // Locks the tables in read for the current session
@@ -39,7 +37,7 @@ func GetRows(db *sql.DB, tableName string, columns []string, filters []string, c
 	// Apply wheres if needed
 	wheres := ""
 	if filters != nil {
-		wheres = fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
+		wheres = filtersStr(filters)
 	}
 	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, tableName, wheres)
 

@@ -16,6 +16,8 @@ const (
 	GET_ONE_ROW_FMT         = "SELECT * FROM %s LIMIT 1;"
 	GET_ROWS_FMT            = "SELECT %s from `%s` %s;"
 	INSERT_FMT              = "INSERT INTO `%s` (%s) VALUES %s;"
+	WHERE_FMT               = "WHERE %s"
+	AND_FMT                 = " AND "
 )
 
 // Returns the table creanion syntax string
@@ -64,4 +66,9 @@ func InsertRowsStr(rowValues [][]string, tableName string, columns []string) str
 	}
 
 	return fmt.Sprintf(INSERT_FMT, tableName, columnStr, strings.Join(strRows, ", "))
+}
+
+func filtersStr(filters []string) string {
+	return fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
+
 }
