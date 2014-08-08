@@ -27,14 +27,24 @@ func main() {
 	mydumpster.CheckKill(db.Ping())
 
 	table := "modulo_pago_gateway_set"
-	//filters := []string{"id < 100"}
+	filters := []string{"id = 1"}
+	censorships := map[string]mydumpster.Censorship{
+		"imagen": mydumpster.Censorship{
+			Key:    "imagen",
+			Suffix: "_after",
+			Prefix: "beafore_",
+			Blank:  true,
+			Null:   true,
+			//DefaultValue: "test",
+		},
+	}
 
 	paisDrop := mydumpster.TableDropStr(table)
 	paisCreation, err := mydumpster.TableCreationStr(db, table)
 	mydumpster.CheckKill(err)
 
 	columns, err := mydumpster.GetColums(db, table)
-	channel, err := mydumpster.GetRows(db, table, columns, nil)
+	channel, err := mydumpster.GetRows(db, table, columns, filters, censorships)
 	rows := make([][]string, 0)
 	for i := range channel {
 		rows = append(rows, i)

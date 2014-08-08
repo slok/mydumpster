@@ -31,7 +31,7 @@ func UnlockTables(db *sql.DB) error {
 }
 
 // FIXME: Change in the future to be lazy
-func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (chan []string, error) {
+func GetRows(db *sql.DB, tableName string, columns []string, filters []string, censorships map[string]Censorship) (chan []string, error) {
 
 	// Create the select string
 	columnStr := strings.Join(columns, ", ")
@@ -63,21 +63,34 @@ func GetRows(db *sql.DB, tableName string, columns []string, filters []string) (
 			//FIXME: for now channels don't send errors
 			err = rows.Scan(scanArgs...)
 			var argValue sql.NullString
+
 			for i, v := range scanArgs {
 				argValue = (*(v.(*sql.NullString)))
 
+				setToNull := !argValue.Valid
+
 				// Check if is NULL before doing anything
-				if argValue.Valid {
+				if !setToNull {
 					// Scape before surrounding by ''(apostrophes)
 					scapedString := ReplaceCharacters(
 						fmt.Sprintf("%s", argValue.String))
-					scanArgsCopy[i] = fmt.Sprintf("'%s'", scapedString)
 
-				} else {
+					// Censore the string only if necessary
+					censoreship, ok := censorships[columns[i]]
+					if ok {
+						scapedString, setToNull = censoreship.censore(scapedString)
+					}
+					scanArgsCopy[i] = fmt.Sprintf("'%s'", scapedString)
+				}
+
+				// Use this style instead of else because the censor could set
+				// to NULL after entering in the string logic
+				if setToNull {
 					scanArgsCopy[i] = NULL
 				}
 			}
-			// Send lazily
+
+			// Finished, so send lazily
 			channel <- scanArgsCopy
 		}
 		// We are done here
