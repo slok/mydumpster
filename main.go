@@ -16,6 +16,7 @@ const (
 	dbName = "ticketbis_dev"
 )
 
+//TESTING MAIN!!!!!
 func main() {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", dbUser, dbPass, dbHost, dbPort, dbName)
@@ -26,7 +27,8 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	table := "modulo_pago_gateway_set"
+	// Prepare our data
+	tableName := "modulo_pago_gateway_set"
 	filters := []string{"id = 1"}
 	censorships := map[string]mydumpster.Censorship{
 		"imagen": mydumpster.Censorship{
@@ -39,18 +41,28 @@ func main() {
 		},
 	}
 
-	paisDrop := mydumpster.TableDropStr(table)
-	paisCreation, err := mydumpster.TableCreationStr(db, table)
-	mydumpster.CheckKill(err)
+	table := mydumpster.Table{
+		Db:          db,
+		TableName:   tableName,
+		Filters:     filters,
+		Censorships: censorships,
+		//Triggers:
+	}
 
-	columns, err := mydumpster.GetColums(db, table)
-	channel, err := mydumpster.GetRows(db, table, columns, filters, censorships)
+	// Do row logic
+	table.GetColums()
+	channel, err := table.GetRows()
 	rows := make([][]string, 0)
 	for i := range channel {
 		rows = append(rows, i)
 	}
 
-	insertStr := mydumpster.InsertRowsStr(rows, table, columns)
+	// Some other logic and prepare the dump
+	paisDrop := mydumpster.TableDropStr(tableName)
+	paisCreation, err := mydumpster.TableCreationStr(db, tableName)
+	mydumpster.CheckKill(err)
+
+	insertStr := mydumpster.InsertRowsStr(rows, tableName, table.Columns)
 	mydumpster.CheckKill(err)
 
 	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
