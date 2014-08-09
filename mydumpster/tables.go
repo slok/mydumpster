@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"io"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ type Table struct {
 	//Triggers    []Trigger
 }
 
+// Loads the column data of the table
 func (t *Table) GetColums() error {
 
 	rows, err := t.Db.Query(fmt.Sprintf(GET_ONE_ROW_FMT, t.TableName))
@@ -38,7 +40,8 @@ func (t *Table) GetColums() error {
 	return err
 }
 
-func (t *Table) GetRows() (chan []string, error) {
+// Gets the rows of a table censored if neccesary
+func (t *Table) getRows() (chan []string, error) {
 
 	// Create the select string
 	columnStr := strings.Join(t.Columns, ", ")
@@ -104,4 +107,23 @@ func (t *Table) GetRows() (chan []string, error) {
 		close(channel)
 	}()
 	return channel, err
+}
+
+// Gets a table (and its triggers) and writes to the writer passed
+func (t *Table) WriteRows(w io.Writer) error {
+
+	// Do row logic
+	t.GetColums()
+	channel, err := t.getRows()
+	rows := make([][]string, 0)
+
+	for i := range channel {
+		rows = append(rows, i)
+	}
+	insertStr := InsertRowsStr(rows, t.TableName, t.Columns)
+
+	// Get the triggers
+
+	fmt.Fprint(w, insertStr)
+	return err
 }

@@ -27,16 +27,15 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	// Prepare our data
 	tableName := "modulo_pago_gateway_set"
 	filters := []string{"id = 1"}
 	censorships := map[string]mydumpster.Censorship{
 		"imagen": mydumpster.Censorship{
 			Key:    "imagen",
 			Suffix: "_after",
-			Prefix: "beafore_",
-			Blank:  true,
-			Null:   true,
+			//Prefix:       "beafore_",
+			//Blank:        true,
+			//Null:         true,
 			//DefaultValue: "test",
 		},
 	}
@@ -49,20 +48,11 @@ func main() {
 		//Triggers:
 	}
 
-	// Do row logic
-	table.GetColums()
-	channel, err := table.GetRows()
-	rows := make([][]string, 0)
-	for i := range channel {
-		rows = append(rows, i)
-	}
-
 	// Some other logic and prepare the dump
 	paisDrop := mydumpster.TableDropStr(tableName)
 	paisCreation, err := mydumpster.TableCreationStr(db, tableName)
 	mydumpster.CheckKill(err)
 
-	insertStr := mydumpster.InsertRowsStr(rows, tableName, table.Columns)
 	mydumpster.CheckKill(err)
 
 	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
@@ -78,7 +68,9 @@ func main() {
 	f.WriteString("\n")
 	f.WriteString(paisCreation)
 	f.WriteString("\n")
-	f.WriteString(insertStr)
+
+	table.WriteRows(f)
+
 	f.Sync()
 
 }
