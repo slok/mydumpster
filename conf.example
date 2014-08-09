@@ -14,12 +14,14 @@
                 }
             },
 
-            "triggers": {
-                "divisa": {
-                    "name": "divisa",
+            "triggers": [
+                    {"name": "divisa",
                     "link": "divisa_id",
-                    "all": false, // Dump all the data not only the parent(pais) related data
-                },
+                    },
+                    {"name": "divisa2",
+                    "link": "divisa2_id",
+                    },
+                ],
             }
         }
     }

@@ -27,8 +27,8 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	tableName := "modulo_pago_gateway_set"
-	filters := []string{"id = 1"}
+	tableName := "modulo_pago_gateway"
+	//filters := []string{"id < 15"}
 	censorships := map[string]mydumpster.Censorship{
 		"imagen": mydumpster.Censorship{
 			Key:    "imagen",
@@ -39,21 +39,34 @@ func main() {
 			//DefaultValue: "test",
 		},
 	}
-
-	table := mydumpster.Table{
-		Db:          db,
-		TableName:   tableName,
-		Filters:     filters,
-		Censorships: censorships,
-		//Triggers:
+	setTable := mydumpster.Table{
+		Db:        db,
+		TableName: "modulo_pago_gateway_set",
 	}
 
-	// Some other logic and prepare the dump
-	paisDrop := mydumpster.TableDropStr(tableName)
-	paisCreation, err := mydumpster.TableCreationStr(db, tableName)
-	mydumpster.CheckKill(err)
+	gatewayTable := mydumpster.Table{
+		Db:        db,
+		TableName: tableName,
+		//Filters:     filters,
+		Censorships: censorships,
+		Triggers: []mydumpster.Trigger{
+			mydumpster.Trigger{
+				TableDst:      setTable,
+				TableSrcName:  "modulo_pago_gateway",
+				TableSrcField: "gateway_set_id",
+				TableDstField: "id",
+				//DumpAll:       true,
+			},
+			mydumpster.Trigger{
+				TableDst:      setTable,
+				TableSrcName:  "modulo_pago_gateway",
+				TableSrcField: "parent_set_id",
+				TableDstField: "id",
+			},
+		},
+	}
 
-	mydumpster.CheckKill(err)
+	tables := []mydumpster.Table{setTable, gatewayTable}
 
 	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
 	//mydumpster.CheckKill(mydumpster.LockTablesWrite(db, "pais"))
@@ -64,12 +77,9 @@ func main() {
 	mydumpster.CheckKill(err)
 	defer f.Close()
 
-	f.WriteString(paisDrop)
-	f.WriteString("\n")
-	f.WriteString(paisCreation)
-	f.WriteString("\n")
-
-	table.WriteRows(f)
+	f.WriteString(mydumpster.DumpHeaderStr(tables))
+	gatewayTable.WriteRows(f)
+	f.WriteString(mydumpster.DumpFooterStr(tables))
 
 	f.Sync()
 

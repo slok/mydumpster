@@ -18,6 +18,8 @@ const (
 	INSERT_FMT              = "INSERT INTO `%s` (%s) VALUES %s;"
 	WHERE_FMT               = "WHERE %s"
 	AND_FMT                 = " AND "
+	IN_FMT                  = "%s IN (%s)"
+	FOREING_CHECK_FMT       = "SET FOREIGN_KEY_CHECKS=%d;"
 )
 
 // Returns the table creanion syntax string
@@ -71,4 +73,33 @@ func InsertRowsStr(rowValues [][]string, tableName string, columns []string) str
 func filtersStr(filters []string) string {
 	return fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
 
+}
+
+// Returns the table creanion syntax string
+func ForeignCheckStr(value bool) string {
+	var v int
+
+	if value {
+		v = 1
+	} else {
+		v = 0
+	}
+	return fmt.Sprintf(FOREING_CHECK_FMT, v)
+}
+
+func DumpHeaderStr(tables []Table) string {
+	result := ForeignCheckStr(false) + "\n"
+
+	for _, t := range tables {
+		drop := TableDropStr(t.TableName)
+		result += drop + "\n"
+		creation, _ := TableCreationStr(t.Db, t.TableName)
+		result += creation + "\n"
+	}
+
+	return result
+}
+
+func DumpFooterStr(tables []Table) string {
+	return ForeignCheckStr(true)
 }

@@ -14,7 +14,7 @@ type Table struct {
 	Filters     []string
 	Columns     []string
 	Censorships map[string]Censorship
-	//Triggers    []Trigger
+	Triggers    []Trigger
 }
 
 // Loads the column data of the table
@@ -99,7 +99,6 @@ func (t *Table) getRows() (chan []string, error) {
 					scanArgsCopy[i] = NULL
 				}
 			}
-
 			// Finished, so send lazily
 			channel <- scanArgsCopy
 		}
@@ -111,7 +110,6 @@ func (t *Table) getRows() (chan []string, error) {
 
 // Gets a table (and its triggers) and writes to the writer passed
 func (t *Table) WriteRows(w io.Writer) error {
-
 	// Do row logic
 	t.GetColums()
 	channel, err := t.getRows()
@@ -122,8 +120,27 @@ func (t *Table) WriteRows(w io.Writer) error {
 	}
 	insertStr := InsertRowsStr(rows, t.TableName, t.Columns)
 
-	// Get the triggers
+	// Get triggers (For now one level)
+	for _, tr := range t.Triggers {
+		// Only get the ids of te arent related rows, so we set this as a filter
+		if !tr.DumpAll {
+			tr.TableDst.Filters = append(
+				tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))
+		}
+		tr.TableDst.WriteRows(w)
+	}
 
-	fmt.Fprint(w, insertStr)
+	// Save in the file
+	t.WriteTableHeader(w)
+	fmt.Fprintln(w, insertStr)
+	t.WriteTableFooter(w)
 	return err
+}
+
+func (t *Table) WriteTableHeader(w io.Writer) {
+
+}
+
+func (t *Table) WriteTableFooter(w io.Writer) {
+
 }

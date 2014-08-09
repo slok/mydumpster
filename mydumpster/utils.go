@@ -31,6 +31,15 @@ func ReplaceCharacters(str string) string {
 
 }
 
+func SearchStr(slice []string, value string) int {
+	for i, v := range slice {
+		if v == value {
+			return i
+		}
+	}
+	return -1
+}
+
 // Checks and error and the program dies (panic)
 func CheckKill(e error) {
 
