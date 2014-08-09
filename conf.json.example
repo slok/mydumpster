@@ -1,0 +1,37 @@
+{
+    "database": {
+        "host": "172.17.0.2",
+        "port": 3306,
+        "user": "root",
+        "password": "",
+        "db": "ticketbis_dev"
+    },
+
+    "tables":{
+        "modulo_pago_gateway": {
+            "filters": [
+                "id >= 1",
+                "id < 15"
+            ],
+            "censorship": {
+                "imagen": {
+                    "prefix": "****_",
+                    "suffix": "_****",
+                    "blank": false,
+                    "null": false,
+                    "default": "something"
+                }
+            },
+            "triggers": [{
+                "src_field_name": "gateway_set_id",
+                "dst_table_name": "modulo_pago_gateway_set",
+                "dst_field_name": "id"},
+                {
+                "src_field_name": "parent_set_id",
+                "dst_table_name": "modulo_pago_gateway_set",
+                "dst_field_name": "id"}
+                ]
+            }
+        }
+    }
+}
