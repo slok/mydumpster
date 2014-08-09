@@ -48,7 +48,7 @@ func (t *Table) getRows() (chan []string, error) {
 
 	// Apply wheres if needed
 	wheres := ""
-	if t.Filters != nil {
+	if t.Filters != nil && len(t.Filters) > 0 {
 		wheres = filtersStr(t.Filters)
 	}
 	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, t.TableName, wheres)
