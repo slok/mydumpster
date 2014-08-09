@@ -18,9 +18,11 @@ func (t *Trigger) SelectQueryFromRowsStr(rows [][]string, columns []string) stri
 	pos := SearchStr(columns, t.TableSrcField)
 
 	// Get all the identifiers
-	ids := make([]string, len(rows))
-	for i, v := range rows {
-		ids[i] = v[pos]
+	ids := make([]string, 0)
+	for _, v := range rows {
+		if v[pos] != NULL && len(v[pos]) > 0 {
+			ids = append(ids, v[pos])
+		}
 	}
 
 	return t.SelectQueryStr(ids)
