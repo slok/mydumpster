@@ -2,17 +2,24 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/slok/mydumpster/mydumpster"
 	"os"
 )
 
-const confFile = "conf.json.example"
+const confFileStr = "conf.json.example"
+const confDumpStr = "dump.sql"
 
 //TESTING MAIN!!!!!
 func main() {
 
-	conf := mydumpster.LoadConfiguration(confFile)
+	dumpOut := flag.String("output", confDumpStr, "Dump output file")
+	confFile := flag.String("config", confFileStr, "Configuration file")
+
+	flag.Parse()
+
+	conf := mydumpster.LoadConfiguration(*confFile)
 	dsn := conf.ConnectionStr()
 	db, _ := sql.Open("mysql", dsn)
 	defer db.Close()
@@ -27,7 +34,7 @@ func main() {
 	//mydumpster.CheckKill(mydumpster.UnlockTables(db))
 
 	// Write to file
-	f, err := os.Create("dump.sql")
+	f, err := os.Create(*dumpOut)
 	mydumpster.CheckKill(err)
 	defer f.Close()
 
