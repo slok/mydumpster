@@ -7,6 +7,10 @@
         "db": "ticketbis_dev"
     },
 
+    "dump": {
+        "all_tables": true
+    },
+
     "tables":{
         "modulo_pago_gateway": {
             "filters": [

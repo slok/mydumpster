@@ -37,9 +37,14 @@ type ConfDatabase struct {
 	Db       string `json:"db"`
 }
 
+type ConfDump struct {
+	AllTables bool `json:"all_tables"`
+}
+
 type Configuration struct {
-	Tables   map[string]*ConfTable `json:"tables"`
-	Database *ConfDatabase         `json:"database"`
+	Tables      map[string]*ConfTable `json:"tables"`
+	Database    *ConfDatabase         `json:"database"`
+	DumpOptions *ConfDump             `json:"dump"`
 }
 
 func LoadConfiguration(filePath string) *Configuration {
@@ -52,6 +57,7 @@ func LoadConfiguration(filePath string) *Configuration {
 
 	err = decoder.Decode(&configuration)
 	CheckKill(err)
+	//configuration.PrintConfiguration()
 
 	return &configuration
 }
@@ -65,7 +71,7 @@ func (c *Configuration) ConnectionStr() string {
 }
 
 //FIXME:
-//  - If any table dump all then create next triggers(Optimization)
+//  - If any table dump all then dont create next triggers(Optimization)
 func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 
 	// Create the containers
@@ -140,14 +146,21 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 }
 
 func (c *Configuration) PrintConfiguration() {
-	v0 := c.Database
-	fmt.Println("Database ")
+	d := c.Database
+	fmt.Println("Database")
 	fmt.Println("-----------")
-	fmt.Println(fmt.Sprintf("  -Host: %s", v0.Host))
-	fmt.Println(fmt.Sprintf("  -Port: %d", v0.Port))
-	fmt.Println(fmt.Sprintf("  -Passwords: %s", v0.Password))
-	fmt.Println(fmt.Sprintf("  -User: %s", v0.User))
-	fmt.Println(fmt.Sprintf("  -Db: %s", v0.Db))
+	fmt.Println(fmt.Sprintf("  -Host: %s", d.Host))
+	fmt.Println(fmt.Sprintf("  -Port: %d", d.Port))
+	fmt.Println(fmt.Sprintf("  -Passwords: %s", d.Password))
+	fmt.Println(fmt.Sprintf("  -User: %s", d.User))
+	fmt.Println(fmt.Sprintf("  -Db: %s", d.Db))
+
+	fmt.Println("")
+
+	do := c.DumpOptions
+	fmt.Println("Dump options")
+	fmt.Println("-------------")
+	fmt.Println(fmt.Sprintf("  - All tables: %t", do.AllTables))
 
 	fmt.Println("")
 
