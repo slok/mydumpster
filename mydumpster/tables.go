@@ -123,6 +123,7 @@ func (t *Table) WriteRows(w io.Writer) error {
 	// Get triggers (For now one level)
 	for _, tr := range t.Triggers {
 		// Only get the ids of te arent related rows, so we set this as a filter
+		fmt.Println(tr.DumpAll)
 		if !tr.DumpAll {
 			tr.TableDst.Filters = append(
 				tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))

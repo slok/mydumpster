@@ -12,6 +12,7 @@ type ConfTrigger struct {
 	TableDstName string `json:"dst_table_name"`
 	FieldSrcName string `json:"src_field_name"`
 	FieldDstName string `json:"dst_field_name"`
+	DumpAll      bool   `json:"dump_all"`
 }
 
 type ConfCensorship struct {
@@ -63,6 +64,8 @@ func (c *Configuration) ConnectionStr() string {
 		c.Database.Db)
 }
 
+//FIXME:
+//  - If any table dump all then create next triggers(Optimization)
 func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 
 	// Create the containers
@@ -125,6 +128,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 					TableSrcName:  k,
 					TableSrcField: tv.FieldSrcName,
 					TableDstField: tv.FieldDstName,
+					DumpAll:       tv.DumpAll,
 				}
 			}
 		}
@@ -169,6 +173,7 @@ func (c *Configuration) PrintConfiguration() {
 			fmt.Println(fmt.Sprintf("  -Src field name: %s", v3.FieldSrcName))
 			fmt.Println(fmt.Sprintf("  -Dst field name: %s", v3.FieldDstName))
 			fmt.Println(fmt.Sprintf("  -Dst Table name: %s", v3.TableDstName))
+			fmt.Println(fmt.Sprintf("  -Dump all: %t", v3.DumpAll))
 			fmt.Println("")
 		}
 

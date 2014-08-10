@@ -25,11 +25,13 @@
             "triggers": [{
                 "src_field_name": "gateway_set_id",
                 "dst_table_name": "modulo_pago_gateway_set",
-                "dst_field_name": "id"},
+                "dst_field_name": "id",
+                "dump_all": true},
                 {
                 "src_field_name": "parent_set_id",
                 "dst_table_name": "modulo_pago_gateway_set",
-                "dst_field_name": "id"}
+                "dst_field_name": "id",
+                "dump_all": false}
                 ]
             }
         }
