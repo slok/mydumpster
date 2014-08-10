@@ -8,7 +8,7 @@
     },
 
     "dump": {
-        "all_tables": true
+        "all_tables": false
     },
 
     "tables":{

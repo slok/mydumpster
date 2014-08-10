@@ -40,8 +40,15 @@ func main() {
 	}
 
 	f.WriteString(mydumpster.DumpHeaderStr(tableList))
-	gw := tables["modulo_pago_gateway"]
-	gw.WriteRows(f)
+
+	for _, t := range tables {
+		// If will be triggered then don't execute directly and let the
+		//triggers do the job
+		if t.TriggeredBy == nil {
+			t.WriteRows(f)
+		}
+	}
+
 	f.WriteString(mydumpster.DumpFooterStr(tableList))
 
 	f.Sync()

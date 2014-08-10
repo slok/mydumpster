@@ -77,6 +77,21 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 	// Create the containers
 	var tables = make(map[string]Table)
 
+	// If 'all_tables' is activated then we need all the tables from the database
+	if c.DumpOptions.AllTables {
+		tableNames, _ := GetTableNames(db)
+		for _, i := range tableNames {
+			tables[i] = Table{
+				Db:          db,
+				TableName:   i,
+				Filters:     make([]string, 0),
+				Censorships: make(map[string]Censorship),
+				Triggers:    make([]Trigger, 0),
+				TriggeredBy: nil,
+			}
+		}
+	}
+
 	// Init our map (We need al the table structs created so
 	// we can refer from a table to another while we parse)
 	for k, v := range c.Tables {

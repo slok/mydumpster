@@ -22,6 +22,7 @@ const (
 	AND_FMT                 = " AND "
 	IN_FMT                  = "%s IN (%s)"
 	FOREING_CHECK_FMT       = "SET FOREIGN_KEY_CHECKS=%d;"
+	SHOW_TABLES_FMT         = "SHOW TABLES;"
 )
 
 // Returns the table creanion syntax string
@@ -115,4 +116,8 @@ func DumpHeaderStr(tables []Table) string {
 
 func DumpFooterStr(tables []Table) string {
 	return ForeignCheckStr(true)
+}
+
+func ShowTablesStr() string {
+	return SHOW_TABLES_FMT
 }
