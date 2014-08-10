@@ -25,6 +25,7 @@ func (t *Table) GetColums() error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
