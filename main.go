@@ -29,10 +29,6 @@ func main() {
 	// Check connection
 	mydumpster.CheckKill(db.Ping())
 
-	//mydumpster.CheckKill(mydumpster.LockTablesRead(db, "pais"))
-	//mydumpster.CheckKill(mydumpster.LockTablesWrite(db, "pais"))
-	//mydumpster.CheckKill(mydumpster.UnlockTables(db))
-
 	// Write to file
 	f, err := os.Create(*dumpOut)
 	mydumpster.CheckKill(err)

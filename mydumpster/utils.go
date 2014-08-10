@@ -1,6 +1,7 @@
 package mydumpster
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -38,6 +39,10 @@ func SearchStr(slice []string, value string) int {
 		}
 	}
 	return -1
+}
+
+func sqlComment(value string) string {
+	return fmt.Sprintf("-- %s", value)
 }
 
 // Checks and error and the program dies (panic)

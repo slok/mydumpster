@@ -110,6 +110,10 @@ func (t *Table) getRows() (chan []string, error) {
 
 // Gets a table (and its triggers) and writes to the writer passed
 func (t *Table) WriteRows(w io.Writer) error {
+
+	// First lock
+	CheckKill(LockTablesRead(t.Db, t.TableName))
+
 	// Do row logic
 	t.GetColums()
 	channel, err := t.getRows()
@@ -134,13 +138,18 @@ func (t *Table) WriteRows(w io.Writer) error {
 	t.WriteTableHeader(w)
 	fmt.Fprintln(w, insertStr)
 	t.WriteTableFooter(w)
+	CheckKill(UnlockTables(t.Db))
 	return err
 }
 
 func (t *Table) WriteTableHeader(w io.Writer) {
-
+	fmt.Fprintln(w,
+		sqlComment(fmt.Sprintf("Start table `%s` dump", t.TableName)))
+	fmt.Fprintln(w, LockTablesStr("write", t.TableName))
 }
 
 func (t *Table) WriteTableFooter(w io.Writer) {
-
+	fmt.Fprintln(w, UnlockTablesStr())
+	fmt.Fprintln(w,
+		sqlComment(fmt.Sprintf("End table `%s` dump", t.TableName)))
 }
