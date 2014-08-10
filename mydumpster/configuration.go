@@ -80,6 +80,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 			Filters:     make([]string, len(v.Filters)),
 			Censorships: make(map[string]Censorship),
 			Triggers:    make([]Trigger, len(v.Triggers)),
+			TriggeredBy: nil,
 		}
 	}
 
@@ -119,6 +120,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 						Filters:     make([]string, 0),
 						Censorships: make(map[string]Censorship),
 						Triggers:    make([]Trigger, 0),
+						TriggeredBy: &t,
 					}
 					aux = tables[tv.TableDstName]
 				}

@@ -16,6 +16,8 @@ const (
 	GET_ONE_ROW_FMT         = "SELECT * FROM %s LIMIT 1;"
 	GET_ROWS_FMT            = "SELECT %s from `%s` %s;"
 	INSERT_FMT              = "INSERT INTO `%s` (%s) VALUES %s;"
+	INSERT_IGNORE_FMT       = "INSERT INTO IGNORE `%s` (%s) VALUES %s;"
+	INSER_REPLACE_FMT       = "REPLACE INTO `%s` (%s) VALUES %s;"
 	WHERE_FMT               = "WHERE %s"
 	AND_FMT                 = " AND "
 	IN_FMT                  = "%s IN (%s)"
@@ -58,7 +60,8 @@ func UnlockTablesStr() string {
 	return UNLOCK_TABLES_FMT
 }
 
-func InsertRowsStr(rowValues [][]string, tableName string, columns []string) string {
+// mode could be ignore, replace or normal, default is normal
+func InsertRowsStr(rowValues [][]string, tableName string, columns []string, mode string) string {
 
 	columnStr := strings.Join(columns, ", ")
 	strRows := make([]string, 0)
@@ -67,12 +70,22 @@ func InsertRowsStr(rowValues [][]string, tableName string, columns []string) str
 		strRows = append(strRows, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
 	}
 
-	return fmt.Sprintf(INSERT_FMT, tableName, columnStr, strings.Join(strRows, ", "))
+	var format string
+
+	switch mode {
+	default:
+		format = INSERT_FMT
+	case "ignore":
+		format = INSERT_IGNORE_FMT
+	case "replace":
+		format = INSER_REPLACE_FMT
+	}
+
+	return fmt.Sprintf(format, tableName, columnStr, strings.Join(strRows, ", "))
 }
 
 func filtersStr(filters []string) string {
 	return fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
-
 }
 
 // Returns the table creanion syntax string

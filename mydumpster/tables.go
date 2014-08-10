@@ -15,6 +15,7 @@ type Table struct {
 	Columns     []string
 	Censorships map[string]Censorship
 	Triggers    []Trigger
+	TriggeredBy *Table
 }
 
 // Loads the column data of the table
@@ -122,7 +123,8 @@ func (t *Table) WriteRows(w io.Writer) error {
 	for i := range channel {
 		rows = append(rows, i)
 	}
-	insertStr := InsertRowsStr(rows, t.TableName, t.Columns)
+
+	insertStr := InsertRowsStr(rows, t.TableName, t.Columns, "replace")
 
 	// Get triggers (For now one level)
 	for _, tr := range t.Triggers {
