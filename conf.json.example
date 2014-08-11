@@ -8,7 +8,8 @@
     },
 
     "dump": {
-        "all_tables": false
+        "all_tables": false,
+        "parallel": 1
     },
 
     "tables":{

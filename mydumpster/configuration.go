@@ -39,6 +39,7 @@ type ConfDatabase struct {
 
 type ConfDump struct {
 	AllTables bool `json:"all_tables"`
+	Parallel  int  `json:"parallel"`
 }
 
 type Configuration struct {
@@ -176,6 +177,7 @@ func (c *Configuration) PrintConfiguration() {
 	fmt.Println("Dump options")
 	fmt.Println("-------------")
 	fmt.Println(fmt.Sprintf("  - All tables: %t", do.AllTables))
+	fmt.Println(fmt.Sprintf("  - Parallel: %d", do.Parallel))
 
 	fmt.Println("")
 

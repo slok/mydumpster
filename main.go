@@ -3,9 +3,11 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/slok/mydumpster/mydumpster"
 	"os"
+	"sync"
 )
 
 const confFileStr = "conf.json.example"
@@ -41,16 +43,39 @@ func main() {
 
 	f.WriteString(mydumpster.DumpHeaderStr(tableList))
 
+	var wg sync.WaitGroup
+	tasks := make(chan mydumpster.Table, conf.DumpOptions.Parallel)
+	finished := make(chan bool, conf.DumpOptions.Parallel)
+	counter := 0
 	for _, t := range tables {
 		// If will be triggered then don't execute directly and let the
-		//triggers do the job
+		// triggers do the job
 		if t.TriggeredBy == nil {
-			t.WriteRows(f)
+			counter += 1
+			tasks <- t
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				t := <-tasks
+
+				fmt.Println(fmt.Sprintf("Launching '%s' dump...", t.TableName))
+				t.WriteRows(f)
+				fmt.Println(fmt.Sprintf("Finished '%s' dump :)", t.TableName))
+				finished <- true
+
+			}()
+
+			for counter >= conf.DumpOptions.Parallel {
+				<-finished // Used to control how many are at the same time
+				counter -= 1
+			}
+
 		}
 	}
+	wg.Wait()
+	close(tasks)
+	close(finished)
 
 	f.WriteString(mydumpster.DumpFooterStr(tableList))
-
 	f.Sync()
-
 }
