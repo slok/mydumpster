@@ -5,4 +5,14 @@ go:
   - 1.3
   - tip
 
+install:
+  - go get github.com/go-sql-driver/mysql
+
+notifications:
+  email:
+    recipients:
+      - slok69@gmail.com
+    on_success: change
+    on_failure: always
+
 script: go test -v ./mydumpster
