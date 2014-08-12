@@ -10,7 +10,7 @@ stable version, be patient :)
 
 |Workflow | CI | 
 |---------|----|
-| [![Stories in Ready](https://badge.waffle.io/slok/mydumpster.png?label=ready)](http://waffle.io/sharestack/sharestack-api) | |
+| [![Stories in Ready](https://badge.waffle.io/slok/mydumpster.png?label=ready)](http://waffle.io/slok/mydumpster) | |
 
 Description
 -----------
