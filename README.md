@@ -10,7 +10,7 @@ stable version, be patient :)
 
 |Workflow | CI | 
 |---------|----|
-| [![Stories in Ready](https://badge.waffle.io/slok/mydumpster.png?label=ready)](http://waffle.io/slok/mydumpster) | |
+| [![Stories in Ready](https://badge.waffle.io/slok/mydumpster.png?label=ready)](http://waffle.io/slok/mydumpster) | [![Build Status](https://travis-ci.org/slok/mydumpster.svg)](https://travis-ci.org/slok/mydumpster)|
 
 Description
 -----------
