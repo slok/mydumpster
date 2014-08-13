@@ -85,11 +85,15 @@ func InsertRowsStr(rowValues [][]string, tableName string, columns []string, mod
 	return fmt.Sprintf(format, tableName, columnStr, strings.Join(strRows, ", "))
 }
 
-func filtersStr(filters []string) string {
-	return fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
+func FiltersStr(filters []string) string {
+	if len(filters) > 0 {
+		return fmt.Sprintf(WHERE_FMT, strings.Join(filters, AND_FMT))
+	} else {
+		return ""
+	}
 }
 
-// Returns the table creanion syntax string
+// Returns the table creation syntax string
 func ForeignCheckStr(value bool) string {
 	var v int
 

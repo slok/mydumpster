@@ -28,22 +28,8 @@ var tests = []TestPair{
 	TestPair{Censorship{"", "__", "__", true, true, "Go is awesome"}, "Go rules", "Go is awesome", false},
 }
 
-// Global for all the tests ------------
-// Execute at the beggining of all the tests
-func setup(t *testing.T) {
-
-}
-
-// Execute at the end of all the tests
-func tearDown(t *testing.T) {
-
-}
-
 // Unit tests --------------------------
 func TestCensore(t *testing.T) {
-	setup(t)
-	defer tearDown(t)
-
 	for _, pair := range tests {
 		v, n := pair.censorship.censore(pair.value)
 		if v != pair.censoredStr {
