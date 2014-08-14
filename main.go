@@ -13,9 +13,13 @@ import (
 const confFileStr = "conf.json.example"
 const confDumpStr = "dump.sql"
 
+var log = mydumpster.GetLogger(mydumpster.MydumpsterLogger)
+
 //TESTING MAIN!!!!!
 func main() {
 
+	// Configuration-----------------------------------------------------------
+	log.Info("Parsing configuration file...")
 	dumpOut := flag.String("output", confDumpStr, "Dump output file")
 	confFile := flag.String("config", confFileStr, "Configuration file")
 
@@ -29,6 +33,7 @@ func main() {
 	tables := conf.GetTables(db)
 
 	// Check connection
+	log.Info("Checking DB connection...")
 	mydumpster.CheckKill(db.Ping())
 
 	// Write to file
@@ -36,11 +41,13 @@ func main() {
 	mydumpster.CheckKill(err)
 	defer f.Close()
 
+	// SQL dump ----------------------------------------------------------------
 	tableList := make([]mydumpster.Table, 0)
 	for _, v := range tables {
 		tableList = append(tableList, v)
 	}
 
+	log.Info(fmt.Sprintf("Start dump process for #%d tables", len(tableList)))
 	f.WriteString(mydumpster.DumpHeaderStr(tableList))
 
 	var wg sync.WaitGroup
@@ -57,10 +64,7 @@ func main() {
 			go func() {
 				defer wg.Done()
 				t := <-tasks
-
-				fmt.Println(fmt.Sprintf("Launching '%s' dump...", t.TableName))
 				t.WriteRows(f)
-				fmt.Println(fmt.Sprintf("Finished '%s' dump :)", t.TableName))
 				finished <- true
 
 			}()
@@ -78,4 +82,6 @@ func main() {
 
 	f.WriteString(mydumpster.DumpFooterStr(tableList))
 	f.Sync()
+
+	log.Info("Bye bye :)")
 }

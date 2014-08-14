@@ -20,9 +20,10 @@ type Table struct {
 
 // Loads the column data of the table
 func (t *Table) GetColums() error {
-
+	log.Debug(fmt.Sprintf("Get '%s' table columns", t.TableName))
 	rows, err := t.Db.Query(fmt.Sprintf(GET_ONE_ROW_FMT, t.TableName))
 	if err != nil {
+		log.Error(fmt.Sprintf("Error getting '%s' table columns", t.TableName))
 		return err
 	}
 	defer rows.Close()
@@ -45,17 +46,22 @@ func (t *Table) GetColums() error {
 // Gets the rows of a table censored if neccesary
 func (t *Table) getRows() (chan []string, error) {
 
+	log.Debug(fmt.Sprintf("Start getting '%s' table rows...", t.TableName))
 	// Create the select string
 	columnStr := strings.Join(t.Columns, ", ")
 
 	// Apply wheres if needed
+	log.Debug(fmt.Sprintf("Applying filters..."))
 	wheres := ""
 	if t.Filters != nil && len(t.Filters) > 0 {
 		wheres = FiltersStr(t.Filters)
 	}
 	selectStr := fmt.Sprintf(GET_ROWS_FMT, columnStr, t.TableName, wheres)
-
 	rows, err := t.Db.Query(selectStr)
+
+	if err != nil {
+		log.Error(fmt.Sprintf("Error executing query for table rows"))
+	}
 
 	// Create the channel to be lazy
 	channel := make(chan []string)
@@ -74,6 +80,10 @@ func (t *Table) getRows() (chan []string, error) {
 
 			//FIXME: for now channels don't send errors
 			err = rows.Scan(scanArgs...)
+			if err != nil {
+				log.Error(fmt.Sprintf("Error Scanning args"))
+			}
+
 			var argValue sql.NullString
 
 			for i, v := range scanArgs {
@@ -90,11 +100,11 @@ func (t *Table) getRows() (chan []string, error) {
 					// Censore the string only if necessary
 					censoreship, ok := t.Censorships[t.Columns[i]]
 					if ok {
+						//log.Debug(fmt.Sprintf("Censoring '%s' field from '%s' table", t.Columns[i], t.TableName))
 						scapedString, setToNull = censoreship.censore(scapedString)
 					}
 					scanArgsCopy[i] = fmt.Sprintf("'%s'", scapedString)
 				}
-
 				// Use this style instead of else because the censor could set
 				// to NULL after entering in the string logic
 				if setToNull {
@@ -112,7 +122,7 @@ func (t *Table) getRows() (chan []string, error) {
 
 // Gets a table (and its triggers) and writes to the writer passed
 func (t *Table) WriteRows(w io.Writer) error {
-
+	log.Info(fmt.Sprintf("Start Dump process for table '%s'...", t.TableName))
 	// First lock
 	CheckKill(LockTablesRead(t.Db, t.TableName))
 
@@ -131,9 +141,11 @@ func (t *Table) WriteRows(w io.Writer) error {
 	for _, tr := range t.Triggers {
 		// Only get the ids of te arent related rows, so we set this as a filter
 		if !tr.DumpAll {
+			log.Warning(fmt.Sprintf("'%s' table will be totally dumped", t.TableName))
 			tr.TableDst.Filters = append(
 				tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))
 		}
+		log.Debug(fmt.Sprintf("'%s' table triggered '%s' table dump", t.TableName, tr.TableDst.TableName))
 		tr.TableDst.WriteRows(w)
 	}
 
@@ -142,16 +154,19 @@ func (t *Table) WriteRows(w io.Writer) error {
 	fmt.Fprintln(w, insertStr)
 	t.WriteTableFooter(w)
 	CheckKill(UnlockTables(t.Db))
+	log.Info(fmt.Sprintf("Finish Dump process for table '%s'...", t.TableName))
 	return err
 }
 
 func (t *Table) WriteTableHeader(w io.Writer) {
+	log.Debug(fmt.Sprintf("Writting table header for table '%s'...", t.TableName))
 	fmt.Fprintln(w,
 		sqlComment(fmt.Sprintf("Start table `%s` dump", t.TableName)))
 	fmt.Fprintln(w, LockTablesStr("write", t.TableName))
 }
 
 func (t *Table) WriteTableFooter(w io.Writer) {
+	log.Debug(fmt.Sprintf("Writting table footer for table '%s'...", t.TableName))
 	fmt.Fprintln(w, UnlockTablesStr())
 	fmt.Fprintln(w,
 		sqlComment(fmt.Sprintf("End table `%s` dump", t.TableName)))

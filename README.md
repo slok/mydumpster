@@ -23,6 +23,11 @@ of teh database (imagine a 3% of the database), that sucks
 This project takes this problem and tries to solve it. The dumps are configured
 in simple json files so you can do easily different custom dumps.
 
+Dependencies
+------------
+* github.com/go-sql-driver/mysql
+* github.com/op/go-logging
+
 Features (planned)
 ------------------
 
