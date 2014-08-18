@@ -14,7 +14,7 @@ type Table struct {
 	Filters     []string
 	Columns     []string
 	Censorships map[string]Censorship
-	Triggers    []Trigger
+	Triggers    []*Trigger
 	TriggeredBy *Table
 }
 
@@ -139,14 +139,17 @@ func (t *Table) WriteRows(w io.Writer) error {
 
 	// Get triggers (For now one level)
 	for _, tr := range t.Triggers {
-		// Only get the ids of te arent related rows, so we set this as a filter
-		if !tr.DumpAll {
-			log.Warning(fmt.Sprintf("'%s' table will be totally dumped", t.TableName))
-			tr.TableDst.Filters = append(
-				tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))
+		if tr != nil {
+			// Only get the ids of te arent related rows, so we set this as a filter
+			if !tr.DumpAll {
+				tr.TableDst.Filters = append(
+					tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))
+			} else {
+				log.Warning(fmt.Sprintf("'%s' table will be totally dumped", t.TableName))
+			}
+			log.Debug(fmt.Sprintf("'%s' table triggered '%s' table dump", t.TableName, tr.TableDst.TableName))
+			tr.TableDst.WriteRows(w)
 		}
-		log.Debug(fmt.Sprintf("'%s' table triggered '%s' table dump", t.TableName, tr.TableDst.TableName))
-		tr.TableDst.WriteRows(w)
 	}
 
 	// Save in the file

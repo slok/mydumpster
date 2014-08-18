@@ -27,6 +27,7 @@ type ConfTable struct {
 	Filters    []string                   `json:"filters"`
 	Censorship map[string]*ConfCensorship `json:"censorship"`
 	Triggers   []*ConfTrigger             `json:"triggers"`
+	Exclude    bool                       `json:"exclude"`
 }
 
 type ConfDatabase struct {
@@ -82,13 +83,16 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 	if c.DumpOptions.AllTables {
 		tableNames, _ := GetTableNames(db)
 		for _, i := range tableNames {
-			tables[i] = Table{
-				Db:          db,
-				TableName:   i,
-				Filters:     make([]string, 0),
-				Censorships: make(map[string]Censorship),
-				Triggers:    make([]Trigger, 0),
-				TriggeredBy: nil,
+			// Exclude tables
+			if !c.Tables[i].Exclude {
+				tables[i] = Table{
+					Db:          db,
+					TableName:   i,
+					Filters:     make([]string, 0),
+					Censorships: make(map[string]Censorship),
+					Triggers:    make([]*Trigger, 0),
+					TriggeredBy: nil,
+				}
 			}
 		}
 	}
@@ -96,67 +100,88 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 	// Init our map (We need al the table structs created so
 	// we can refer from a table to another while we parse)
 	for k, v := range c.Tables {
-		tables[k] = Table{
-			Db:          db,
-			TableName:   k,
-			Filters:     make([]string, len(v.Filters)),
-			Censorships: make(map[string]Censorship),
-			Triggers:    make([]Trigger, len(v.Triggers)),
-			TriggeredBy: nil,
+		// Exclude table
+		if !v.Exclude {
+			tables[k] = Table{
+				Db:          db,
+				TableName:   k,
+				Filters:     make([]string, len(v.Filters)),
+				Censorships: make(map[string]Censorship),
+				Triggers:    make([]*Trigger, len(v.Triggers)),
+				TriggeredBy: nil,
+			}
+		} else {
+			log.Warning("Excludig '%s' table and pointing triggers ", k)
 		}
 	}
 
 	for k, v := range c.Tables {
-		t := tables[k]
+		// Exclude table
+		if !v.Exclude {
 
-		// Create the filters
-		for k, f := range v.Filters {
-			t.Filters[k] = f
-		}
+			t := tables[k]
 
-		// Create the censorships
-		if v.Censorship != nil {
-			for ck, cv := range v.Censorship {
-				t.Censorships[ck] = Censorship{
-					Key:          ck,
-					Suffix:       cv.Suffix,
-					Prefix:       cv.Prefix,
-					Blank:        cv.Blank,
-					Null:         cv.Null,
-					DefaultValue: cv.Default,
-				}
+			// Create the filters
+			for k, f := range v.Filters {
+				t.Filters[k] = f
 			}
-		}
 
-		// Create the censorships
-		if v.Triggers != nil {
-			for tk, tv := range v.Triggers {
-				aux, ok := tables[tv.TableDstName]
-
-				// Table not declared (We create)
-				if !ok {
-					//CheckKill(errors.New("Not table in map"))
-					tables[tv.TableDstName] = Table{
-						Db:          db,
-						TableName:   tv.TableDstName,
-						Filters:     make([]string, 0),
-						Censorships: make(map[string]Censorship),
-						Triggers:    make([]Trigger, 0),
-						TriggeredBy: &t,
+			// Create the censorships
+			if v.Censorship != nil {
+				for ck, cv := range v.Censorship {
+					t.Censorships[ck] = Censorship{
+						Key:          ck,
+						Suffix:       cv.Suffix,
+						Prefix:       cv.Prefix,
+						Blank:        cv.Blank,
+						Null:         cv.Null,
+						DefaultValue: cv.Default,
 					}
-					aux = tables[tv.TableDstName]
-				}
-
-				t.Triggers[tk] = Trigger{
-					TableDst:      aux,
-					TableSrcName:  k,
-					TableSrcField: tv.FieldSrcName,
-					TableDstField: tv.FieldDstName,
-					DumpAll:       tv.DumpAll,
 				}
 			}
-		}
 
+			// Create the triggers
+			if v.Triggers != nil {
+				for tk, tv := range v.Triggers {
+
+					// Check if triggers an excluded table
+					// (if the table doesn't exist thn there isn't configuration of exclude)
+					auxConfTabl, ok := c.Tables[tv.TableDstName]
+					if !ok || ok && !auxConfTabl.Exclude {
+
+						aux, ok := tables[tv.TableDstName]
+
+						// Table not declared (We create)
+						if !ok {
+							//CheckKill(errors.New("Not table in map"))
+							tables[tv.TableDstName] = Table{
+								Db:          db,
+								TableName:   tv.TableDstName,
+								Filters:     make([]string, 0),
+								Censorships: make(map[string]Censorship),
+								Triggers:    make([]*Trigger, 0),
+								TriggeredBy: &t,
+							}
+							aux = tables[tv.TableDstName]
+						}
+
+						t.Triggers[tk] = &Trigger{
+							TableDst:      aux,
+							TableSrcName:  k,
+							TableSrcField: tv.FieldSrcName,
+							TableDstField: tv.FieldDstName,
+							DumpAll:       tv.DumpAll,
+						}
+					} else { // Remove the element
+						// Difference between slice 1 and 2 applied to the key
+						//auxTk := tk - (len(v.Triggers) - len(t.Triggers))
+						//t.Triggers = append(t.Triggers[:auxTk], t.Triggers[auxTk+1:]...)
+						t.Triggers[tk] = nil
+					}
+				}
+			}
+			fmt.Println(len(t.Triggers))
+		}
 	}
 	return tables
 }
@@ -184,6 +209,8 @@ func (c *Configuration) PrintConfiguration() {
 	for k, v := range c.Tables {
 		fmt.Println("Table " + k)
 		fmt.Println("-----------")
+		fmt.Println(fmt.Sprintf("Exclude: %t", v.Exclude))
+
 		fmt.Println("Filters:")
 		for _, f := range v.Filters {
 			fmt.Println("  -" + f)
