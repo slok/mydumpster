@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-const confFileStr = "conf.json.example"
+const confFileStr = "conf_examples/example.conf"
 const confDumpStr = "dump.sql"
 
 var log = mydumpster.GetLogger(mydumpster.MydumpsterLogger)
