@@ -10,7 +10,6 @@ type Trigger struct {
 	TableSrcName  string
 	TableSrcField string
 	TableDstField string
-	DumpAll       bool
 }
 
 func (t *Trigger) SelectQueryFromRowsStr(rows [][]string, columns []string) string {

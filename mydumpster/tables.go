@@ -16,6 +16,7 @@ type Table struct {
 	Censorships map[string]Censorship
 	Triggers    []*Trigger
 	TriggeredBy *Table
+	DumpAll     bool
 }
 
 // Loads the column data of the table
@@ -141,7 +142,7 @@ func (t *Table) WriteRows(w io.Writer) error {
 	for _, tr := range t.Triggers {
 		if tr != nil {
 			// Only get the ids of te arent related rows, so we set this as a filter
-			if !tr.DumpAll {
+			if !tr.TableDst.DumpAll {
 				tr.TableDst.Filters = append(
 					tr.TableDst.Filters, tr.SelectQueryFromRowsStr(rows, t.Columns))
 			} else {

@@ -12,7 +12,6 @@ type ConfTrigger struct {
 	TableDstName string `json:"dst_table_name"`
 	FieldSrcName string `json:"src_field_name"`
 	FieldDstName string `json:"dst_field_name"`
-	DumpAll      bool   `json:"dump_all"`
 }
 
 type ConfCensorship struct {
@@ -28,6 +27,7 @@ type ConfTable struct {
 	Censorship map[string]*ConfCensorship `json:"censorship"`
 	Triggers   []*ConfTrigger             `json:"triggers"`
 	Exclude    bool                       `json:"exclude"`
+	DumpAll    bool                       `json:"dump_all"`
 }
 
 type ConfDatabase struct {
@@ -92,6 +92,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 					Censorships: make(map[string]Censorship),
 					Triggers:    make([]*Trigger, 0),
 					TriggeredBy: nil,
+					DumpAll:     false,
 				}
 			}
 		}
@@ -109,6 +110,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 				Censorships: make(map[string]Censorship),
 				Triggers:    make([]*Trigger, len(v.Triggers)),
 				TriggeredBy: nil,
+				DumpAll:     v.DumpAll,
 			}
 		} else {
 			log.Warning("Excludig '%s' table and pointing triggers ", k)
@@ -161,6 +163,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 								Censorships: make(map[string]Censorship),
 								Triggers:    make([]*Trigger, 0),
 								TriggeredBy: &t,
+								DumpAll:     false,
 							}
 							aux = tables[tv.TableDstName]
 						}
@@ -170,7 +173,6 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 							TableSrcName:  k,
 							TableSrcField: tv.FieldSrcName,
 							TableDstField: tv.FieldDstName,
-							DumpAll:       tv.DumpAll,
 						}
 					} else { // Remove the element
 						// Difference between slice 1 and 2 applied to the key
@@ -210,6 +212,7 @@ func (c *Configuration) PrintConfiguration() {
 		fmt.Println("Table " + k)
 		fmt.Println("-----------")
 		fmt.Println(fmt.Sprintf("Exclude: %t", v.Exclude))
+		fmt.Println(fmt.Sprintf("Dump all: %t", v.DumpAll))
 
 		fmt.Println("Filters:")
 		for _, f := range v.Filters {
@@ -232,7 +235,6 @@ func (c *Configuration) PrintConfiguration() {
 			fmt.Println(fmt.Sprintf("  -Src field name: %s", v3.FieldSrcName))
 			fmt.Println(fmt.Sprintf("  -Dst field name: %s", v3.FieldDstName))
 			fmt.Println(fmt.Sprintf("  -Dst Table name: %s", v3.TableDstName))
-			fmt.Println(fmt.Sprintf("  -Dump all: %t", v3.DumpAll))
 			fmt.Println("")
 		}
 
