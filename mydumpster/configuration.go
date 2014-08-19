@@ -72,8 +72,6 @@ func (c *Configuration) ConnectionStr() string {
 		c.Database.Db)
 }
 
-//FIXME:
-//  - If any table dump all then dont create next triggers(Optimization)
 func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 
 	// Create the containers
@@ -147,9 +145,10 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 				for tk, tv := range v.Triggers {
 
 					// Check if triggers an excluded table
-					// (if the table doesn't exist thn there isn't configuration of exclude)
+					// Optimization: Also check if there is a dump all flag to exclude the trigger
+					// Note: if the table doesn't exist then there isn't configuration of exclude nor dump_all)
 					auxConfTabl, ok := c.Tables[tv.TableDstName]
-					if !ok || ok && !auxConfTabl.Exclude {
+					if !ok || ok && !auxConfTabl.Exclude && !auxConfTabl.DumpAll {
 
 						aux, ok := tables[tv.TableDstName]
 
@@ -178,6 +177,7 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 						// Difference between slice 1 and 2 applied to the key
 						//auxTk := tk - (len(v.Triggers) - len(t.Triggers))
 						//t.Triggers = append(t.Triggers[:auxTk], t.Triggers[auxTk+1:]...)
+						log.Warning("Removing trigger for table '%s'", tv.TableDstName)
 						t.Triggers[tk] = nil
 					}
 				}
