@@ -182,7 +182,6 @@ func (c *Configuration) GetTables(db *sql.DB) map[string]Table {
 					}
 				}
 			}
-			fmt.Println(len(t.Triggers))
 		}
 	}
 	return tables
